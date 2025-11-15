@@ -4,7 +4,10 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, FileText, Briefcase, ArrowLeft, Copy, Upload } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Copy, Upload, Briefcase } from 'lucide-react';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,12 +64,37 @@ export default function AtsRealScorePage() {
 
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsText(file);
+        const reader = new FileReader();
+
+        if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            reader.onload = (event) => {
+                try {
+                    const arrayBuffer = event.target?.result;
+                    if (arrayBuffer) {
+                        const zip = new PizZip(arrayBuffer);
+                        const doc = new Docxtemplater(zip, {
+                            paragraphLoop: true,
+                            linebreaks: true,
+                        });
+                        const text = doc.getFullText();
+                        resolve(text);
+                    } else {
+                        reject(new Error('Could not read file buffer.'));
+                    }
+                } catch (error) {
+                    console.error('Error parsing docx file:', error);
+                    reject(new Error('Failed to parse .docx file.'));
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsText(file);
+        }
     });
-  };
+};
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setStep('loading');
@@ -95,10 +123,11 @@ export default function AtsRealScorePage() {
         setStep('input');
       }
     } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
        toast({
         variant: 'destructive',
-        title: 'Error reading file.',
-        description: 'There was a problem reading your resume file. Please try again.',
+        title: 'Error processing file.',
+        description: `There was a problem reading your resume file. ${errorMessage}`,
       });
       setStep('input');
     }
@@ -174,7 +203,7 @@ export default function AtsRealScorePage() {
                       <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <Input type="file" accept=".pdf,.doc,.docx,.txt" {...resumeFileRef} />
+                      <Input type="file" accept=".pdf,.docx,.txt" {...resumeFileRef} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,9 +260,12 @@ export default function AtsRealScorePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-background sm:p-6 md:p-10">
-      <header className="flex items-center gap-3 mb-8 text-center">
-        <Bot className="w-10 h-10 text-primary" />
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score with Arty</h1>
+      <header className="flex flex-col items-center gap-2 mb-8 text-center">
+        <div className="flex items-center gap-3">
+          <Bot className="w-10 h-10 text-primary" />
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
+        </div>
+        <p className="italic text-muted-foreground">Arty will be your career search companion</p>
       </header>
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
