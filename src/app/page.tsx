@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -17,13 +17,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
+import { getAtsAnalysis, type AnalysisResult, askArtyAction } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
@@ -184,7 +185,6 @@ export default function AtsRealScorePage() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center h-96">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">Arty is on the case...</p>
           </div>
         );
       case 'results':
@@ -308,7 +308,7 @@ export default function AtsRealScorePage() {
       case 'loading':
         return {
           title: "Analyzing...",
-          description: ""
+          description: "Arty is on the case..."
         }
       case 'input':
       default:
@@ -428,6 +428,8 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       </Tabs>
       
        <TryAgain onTryAgain={onTryAgain} />
+       <AskArtyFloater result={result} />
+
     </div>
   );
 }
@@ -521,5 +523,107 @@ function TryAgain({ onTryAgain }: { onTryAgain: (file: File) => void }) {
                 )}
             </CardContent>
         </Card>
+    );
+}
+
+type ChatMessage = {
+    role: 'user' | 'model';
+    content: string;
+};
+
+function AskArtyFloater({ result }: { result: AnalysisResult }) {
+    const [open, setOpen] = React.useState(false);
+    const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
+    const [question, setQuestion] = React.useState('');
+    const [isThinking, setIsThinking] = React.useState(false);
+    const { toast } = useToast();
+    const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+      if(scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    }, [chatHistory])
+
+    const handleAskArty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!question.trim() || isThinking) return;
+
+        const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: question }];
+        setChatHistory(newHistory);
+        setQuestion('');
+        setIsThinking(true);
+
+        const response = await askArtyAction({
+            question,
+            resumeText: result.resumeText,
+            jobDescriptionText: result.jobDescriptionText,
+        }, chatHistory);
+
+        setIsThinking(false);
+
+        if (response.success) {
+            setChatHistory([...newHistory, { role: 'model', content: response.data.answer }]);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Arty is having trouble thinking.',
+                description: response.error,
+            });
+             setChatHistory(chatHistory); // revert history
+        }
+    };
+
+
+    return (
+        <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+                <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 animate-in fade-in-0 zoom-in-50 duration-500">
+                    <div className="flex flex-col items-center">
+                        <Bot className="h-8 w-8" />
+                        <span className="text-xs">Ask Arty</span>
+                    </div>
+                </Button>
+            </SheetTrigger>
+            <SheetContent className="flex flex-col">
+                <SheetHeader>
+                    <SheetTitle>Ask Arty</SheetTitle>
+                    <SheetDescription>
+                        Have questions about your resume or the job? Arty is here to help!
+                    </SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+                    <div className="space-y-4">
+                        {chatHistory.map((chat, index) => (
+                            <div key={index} className={cn("flex items-start gap-3", chat.role === 'user' ? 'justify-end' : '')}>
+                                {chat.role === 'model' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
+                                <div className={cn("p-3 rounded-lg max-w-sm", chat.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: marked(chat.content) }} />
+                                </div>
+                            </div>
+                        ))}
+                         {isThinking && (
+                            <div className="flex items-start gap-3">
+                                <Bot className="h-6 w-6 text-primary flex-shrink-0" />
+                                <div className="p-3 rounded-lg bg-muted">
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+                <form onSubmit={handleAskArty} className="flex items-center gap-2 pt-4">
+                    <Input
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder="e.g., How can I improve my skills section?"
+                        disabled={isThinking}
+                    />
+                    <Button type="submit" size="icon" disabled={isThinking || !question.trim()}>
+                        {isThinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                </form>
+            </SheetContent>
+        </Sheet>
     );
 }
