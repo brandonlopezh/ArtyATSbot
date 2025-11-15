@@ -75,7 +75,6 @@ const prompt = ai.definePrompt({
   `,
   config: {
     temperature: 0.1,
-    model: 'googleai/gemini-2.5-flash',
   },
 });
 

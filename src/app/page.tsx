@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Link } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send, CornerDownLeft } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -16,11 +16,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
+import { getAtsAnalysis, askArtyAction, type AnalysisResult, type AskArtyInput } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
@@ -303,7 +306,7 @@ export default function AtsRealScorePage() {
 }
 
 function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
-  
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
   const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
   const whyIWouldMoveForwardHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldMoveForward), [result.ratingExplanation.whyIWouldMoveForward]);
   const whyIWouldNotMoveForwardHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldNotMoveForward), [result.ratingExplanation.whyIWouldNotMoveForward]);
@@ -337,13 +340,28 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       </div>
       
       <div className="text-center">
-         <Button asChild size="lg" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-          <a href="https://gemini.google.com/gem/10bd2dSACyUNxaOd-vkCWNrktLpQl-8TR?usp=sharing" target="_blank" rel="noopener noreferrer">
+         <Button onClick={() => setIsChatOpen(true)} size="lg" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <Sparkles className="w-5 h-5 mr-2" />
             Ask Arty
-          </a>
         </Button>
       </div>
+
+       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <DialogContent className="sm:max-w-[625px] h-[70vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Bot /> Ask Arty</DialogTitle>
+            <DialogDescription>
+              Have questions about your resume, the job description, or your analysis? Arty is here to help.
+            </DialogDescription>
+          </DialogHeader>
+          <AskArtyChat
+            resumeText={result.resumeText}
+            jobDescriptionText={result.jobDescriptionText}
+            initialQuestion={`Gemini, why is my resume rating ${result.scores.atsRealScore}%?`}
+          />
+        </DialogContent>
+      </Dialog>
+
 
       <Tabs defaultValue="suggestions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -485,3 +503,101 @@ function TryAgain({ onTryAgain }: { onTryAgain: (file: File) => void }) {
         </Card>
     );
 }
+
+type ChatMessage = {
+  role: 'user' | 'model';
+  content: string;
+};
+
+function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resumeText: string; jobDescriptionText: string; initialQuestion: string }) {
+  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [input, setInput] = React.useState(initialQuestion);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    const chatHistory = messages;
+
+    try {
+      const result = await askArtyAction(
+        { question: input, resumeText, jobDescriptionText },
+        chatHistory
+      );
+
+      if (result.success) {
+        const modelMessage: ChatMessage = { role: 'model', content: result.data.answer };
+        setMessages(prev => [...prev, modelMessage]);
+      } else {
+        const errorMessage: ChatMessage = { role: 'model', content: `Sorry, something went wrong: ${result.error}` };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      const errorMessage: ChatMessage = { role: 'model', content: `Sorry, an unexpected error occurred.` };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <ScrollArea className="flex-1 p-4 -mx-6" ref={scrollAreaRef}>
+        <div className="space-y-4 pr-6">
+          {messages.map((message, index) => (
+            <div key={index} className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+              <div
+                className={cn(
+                  'max-w-[75%] rounded-lg px-3 py-2',
+                  message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                )}
+              >
+                <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: marked(message.content) as string}} />
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted rounded-lg px-3 py-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+      <DialogFooter className="pt-4">
+        <form onSubmit={handleSend} className="flex items-center w-full space-x-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Arty anything..."
+            disabled={isLoading}
+            className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                handleSend(e);
+              }
+            }}
+          />
+          <Button type="submit" size="icon" disabled={isLoading}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </DialogFooter>
+    </div>
+  );
+}
+
