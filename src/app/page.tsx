@@ -47,6 +47,7 @@ type Step = 'input' | 'loading' | 'results';
 export default function AtsRealScorePage() {
   const [step, setStep] = React.useState<Step>('input');
   const [analysisResult, setAnalysisResult] = React.useState<AnalysisResult | null>(null);
+  const [analysisId, setAnalysisId] = React.useState(0);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -112,6 +113,7 @@ export default function AtsRealScorePage() {
 
       if (result.success) {
         setAnalysisResult(result.data);
+        setAnalysisId(id => id + 1);
         setStep('results');
       } else {
         toast({
@@ -139,19 +141,19 @@ export default function AtsRealScorePage() {
   };
   
   const handleTryAgain = async (newResumeFile: File) => {
-    if (!analysisResult) return;
     setStep('loading');
     try {
-        const resumeText = await readFileAsText(newResumeFile);
+        const newResumeText = await readFileAsText(newResumeFile);
         
         const result = await getAtsAnalysis({
             name: form.getValues('name'),
-            jobDescriptionText: analysisResult.jobDescriptionText,
-            resumeText: resumeText,
+            jobDescriptionText: form.getValues('jobDescriptionText'),
+            resumeText: newResumeText,
         });
 
         if (result.success) {
             setAnalysisResult(result.data);
+            setAnalysisId(id => id + 1);
             setStep('results');
         } else {
             toast({
@@ -159,7 +161,7 @@ export default function AtsRealScorePage() {
                 title: 'Analysis Failed',
                 description: result.error,
             });
-            setStep('results'); // Go back to showing previous results
+            setStep('results'); 
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -168,7 +170,7 @@ export default function AtsRealScorePage() {
             title: 'Error processing new resume',
             description: errorMessage,
         });
-        setStep('results'); // Go back to showing previous results
+        setStep('results'); 
     }
 };
 
@@ -182,7 +184,7 @@ export default function AtsRealScorePage() {
           </div>
         );
       case 'results':
-        return analysisResult && <ResultsDisplay result={analysisResult} onBack={handleGoBack} onTryAgain={handleTryAgain} />;
+        return analysisResult && <ResultsDisplay key={analysisId} result={analysisResult} onBack={handleGoBack} onTryAgain={handleTryAgain} />;
       case 'input':
       default:
         return (
@@ -297,9 +299,6 @@ export default function AtsRealScorePage() {
       </main>
       <footer className="flex items-center justify-center w-full gap-4 mt-8 text-sm text-muted-foreground">
         <p>Powered by AI. Designed with ❤️.</p>
-        <div className="md:hidden">
-            <ThemeToggle />
-        </div>
       </footer>
     </div>
   );
@@ -453,7 +452,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
             <span className={cn("text-muted-foreground", isCenter ? "text-4xl" : "text-3xl")}>%</span>
           </div>
         </div>
-        <Progress value={progress} className={cn("h-3 mt-4", isPrimary && "[&>div]:bg-primary")} />
+        <Progress value={progress} className={cn("h-3 mt-4 transition-all", isPrimary && "[&>div]:bg-primary")} />
       </CardContent>
     </Card>
   );
