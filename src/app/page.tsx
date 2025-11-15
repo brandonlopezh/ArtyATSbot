@@ -279,12 +279,12 @@ export default function AtsRealScorePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-background text-foreground sm:p-6 md:p-10">
-      <header className="flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
-        <div className="flex items-center gap-3">
-          <Bot className="w-10 h-10 text-primary" />
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score</h1>
+       <header className="relative flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
+        <div className="absolute top-0 right-0">
+          <ThemeToggle />
         </div>
-        <p className="text-lg text-muted-foreground">w/ Arty the Career Search companion</p>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score</h1>
+        <p className="text-lg text-muted-foreground">Beat the bots and impress recruiters</p>
       </header>
       <main className="w-full max-w-4xl">
         <Card className="w-full shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
@@ -299,7 +299,6 @@ export default function AtsRealScorePage() {
       </main>
       <footer className="flex items-center justify-center w-full gap-4 mt-8 text-sm text-muted-foreground">
         <p>Powered by AI. Designed with ❤️.</p>
-        <ThemeToggle />
       </footer>
     </div>
   );
