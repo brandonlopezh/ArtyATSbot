@@ -22,9 +22,10 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
-const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/pdf'];
+const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Please tell Arty your name!" }),
@@ -87,7 +88,7 @@ export default function AtsRealScorePage() {
                 }
             };
             reader.readAsArrayBuffer(file);
-        } else if (file.type === 'text/plain' || file.type === 'application/pdf') {
+        } else if (file.type === 'text/plain') {
              reader.onload = () => resolve(reader.result as string);
              reader.onerror = () => reject(reader.error);
              reader.readAsText(file);
@@ -182,8 +183,8 @@ export default function AtsRealScorePage() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center h-96">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <h2 className="text-2xl font-semibold">Arty is working its magic...</h2>
-            <p className="text-muted-foreground">Analyzing your resume against the job description. Hold tight! 🚀</p>
+            <h2 className="text-2xl font-semibold">Arty is on the case...</h2>
+            <p className="text-muted-foreground">Arty is meticulously analyzing your resume (may take up to a minute to achieve greatness)</p>
           </div>
         );
       case 'results':
@@ -307,12 +308,12 @@ export default function AtsRealScorePage() {
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {step === 'input' ? "Let's Get Started!" : "Here's Your Analysis"}
+            {step === 'input' ? "Let's Get Started!" : "Analysis Report"}
           </CardTitle>
           <CardDescription>
             {step === 'input'
               ? "What's up! I'm Arty, your ATS Job Helper. Let's beat the bots and impress recruiters. 🚀"
-              : "Arty's analysis is complete. Let's dive into the results."}
+              : "Arty has meticulously analyzed your resume. Let's dive into the results."}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
@@ -325,14 +326,11 @@ export default function AtsRealScorePage() {
 }
 
 function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-accent';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-destructive';
-  };
   
   const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
   const feedbackHtml = React.useMemo(() => marked(result.feedback.feedback), [result.feedback.feedback]);
+  const whyRatingExplanationHtml = React.useMemo(() => marked(result.ratingExplanation.explanation), [result.ratingExplanation.explanation]);
+  const whyRatingRecruiterHtml = React.useMemo(() => marked(result.ratingExplanation.recruiterPerspective), [result.ratingExplanation.recruiterPerspective]);
 
 
   return (
@@ -363,23 +361,16 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       </div>
 
       <Tabs defaultValue="feedback" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="feedback">Arty's Feedback</TabsTrigger>
           <TabsTrigger value="suggestions">Enhancements Needed</TabsTrigger>
+          <TabsTrigger value="why-rating">Arty, why this rating?</TabsTrigger>
         </TabsList>
         
         <TabsContent value="feedback" className="mt-4">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-16 h-16 border-2 border-primary">
-                  <AvatarImage src="https://picsum.photos/seed/arty-robot/100/100" data-ai-hint="robot illustration" alt="Arty the Robot" />
-                  <AvatarFallback>🤖</AvatarFallback>
-                </Avatar>
-                <div className="p-4 rounded-lg bg-secondary flex-1">
-                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: feedbackHtml }} />
-                </div>
-              </div>
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: feedbackHtml }} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -394,6 +385,25 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
                <div className="p-4 space-y-4 prose max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-foreground" dangerouslySetInnerHTML={{ __html: suggestionsHtml }} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="why-rating" className="mt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Why This Rating?</CardTitle>
+                    <CardDescription>Arty's breakdown of what's affecting your score.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyRatingExplanationHtml }} />
+                    <Alert>
+                        <Bot className="h-4 w-4" />
+                        <AlertTitle>Recruiter's Perspective</AlertTitle>
+                        <AlertDescription>
+                            <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyRatingRecruiterHtml }} />
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
       
@@ -411,7 +421,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
   }, [score]);
 
   const getScoreColorClass = (value: number) => {
-    if (value >= 80) return 'text-accent';
+    if (value >= 70) return 'text-accent';
     if (value >= 60) return 'text-yellow-500';
     return 'text-destructive';
   };

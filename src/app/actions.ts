@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { atsScoreCalculation, type AtsScoreCalculationOutput } from '@/ai/flows/ats-score-calculation';
 import { generatePersonalizedFeedback, type PersonalizedFeedbackOutput } from '@/ai/flows/personalized-feedback';
 import { resumeEnhancementSuggestions, type ResumeEnhancementSuggestionsOutput } from '@/ai/flows/resume-enhancement-suggestions';
+import { whyThisRating, type WhyThisRatingOutput } from '@/ai/flows/why-this-rating';
+
 
 const analysisSchema = z.object({
   name: z.string(),
@@ -18,6 +20,7 @@ export type AnalysisResult = {
   scores: AtsScoreCalculationOutput;
   feedback: PersonalizedFeedbackOutput;
   suggestions: ResumeEnhancementSuggestionsOutput;
+  ratingExplanation: WhyThisRatingOutput;
 };
 
 export async function getAtsAnalysis(
@@ -26,32 +29,34 @@ export async function getAtsAnalysis(
     try {
         const { name, employmentStatus, resumeText, jobDescriptionText, goals } = values;
 
+        const scores = await atsScoreCalculation({ resumeText, jobDescriptionText });
+
         // 1. Calculate Scores & Get Suggestions in parallel
-        const [scores, suggestions] = await Promise.all([
-            atsScoreCalculation({ resumeText, jobDescriptionText }),
+        const [suggestions, feedback, ratingExplanation] = await Promise.all([
             resumeEnhancementSuggestions({
                 resumeText,
                 jobDescriptionText,
-                atsPassScore: 0, // Placeholder, will be updated
-                humanRecruiterScore: 0, // Placeholder, will be updated
+                atsPassScore: scores.atsPassScore,
+                humanRecruiterScore: scores.humanRecruiterScore,
                 userInfo: goals || 'Looking for a new role.',
                 employmentStatus,
-            })
+            }),
+            generatePersonalizedFeedback({
+                resumeText,
+                jobDescriptionText,
+                userName: name,
+                atsPassScore: scores.atsPassScore,
+                humanRecruiterScore: scores.humanRecruiterScore,
+                strengths: "Your resume shows a strong foundation. Let's sharpen it.", // Generic strength
+                weaknesses: "Based on the analysis, here are areas to focus on.", // Generic weakness, real suggestions are in the other flow
+            }),
+            whyThisRating({
+                resumeText,
+                jobDescriptionText,
+                atsRealScore: scores.atsRealScore,
+            }),
         ]);
         
-        // Update suggestions with actual scores for feedback context
-        suggestions.suggestedEdits = suggestions.suggestedEdits; // This is a bit redundant, but ensures the structure is maintained
-
-        // 2. Generate feedback using the results
-        const feedback = await generatePersonalizedFeedback({
-            resumeText,
-            jobDescriptionText,
-            userName: name,
-            atsPassScore: scores.atsPassScore,
-            humanRecruiterScore: scores.humanRecruiterScore,
-            strengths: "Your resume shows a strong foundation. Let's sharpen it.", // Generic strength
-            weaknesses: suggestions.suggestedEdits, // Use suggestions as the basis for weaknesses
-        });
 
         return {
             success: true,
@@ -59,6 +64,7 @@ export async function getAtsAnalysis(
                 scores,
                 feedback,
                 suggestions,
+                ratingExplanation,
             },
         };
     } catch (error) {
