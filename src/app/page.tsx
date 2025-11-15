@@ -139,13 +139,14 @@ export default function AtsRealScorePage() {
   };
   
   const handleTryAgain = async (newResumeFile: File) => {
+    if (!analysisResult) return;
     setStep('loading');
     try {
-        const currentValues = form.getValues();
         const resumeText = await readFileAsText(newResumeFile);
         
         const result = await getAtsAnalysis({
-            ...currentValues,
+            name: form.getValues('name'),
+            jobDescriptionText: analysisResult.jobDescriptionText,
             resumeText,
         });
 
@@ -523,17 +524,18 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
     if (!input.trim() || isLoading) return;
 
     const userMessage: ChatMessage = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages: ChatMessage[] = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
-    const chatHistory = messages;
-
     try {
-      const result = await askArtyAction(
-        { question: input, resumeText, jobDescriptionText },
-        chatHistory
-      );
+      const result = await askArtyAction({
+        question: input,
+        resumeText,
+        jobDescriptionText,
+        chatHistory: messages,
+      });
 
       if (result.success) {
         const modelMessage: ChatMessage = { role: 'model', content: result.data.answer };

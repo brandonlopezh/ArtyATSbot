@@ -64,11 +64,10 @@ export async function getAtsAnalysis(
 }
 
 export async function askArtyAction(
-    input: Omit<AskArtyInput, 'chatHistory'>,
-    chatHistory: AskArtyInput['chatHistory']
+    input: AskArtyInput
 ): Promise<{ success: true; data: AskArtyOutput } | { success: false; error: string }> {
     try {
-        const result = await askArty({ ...input, chatHistory });
+        const result = await askArty(input);
         return { success: true, data: result };
     } catch (error) {
         console.error('Error in askArtyAction:', error);
