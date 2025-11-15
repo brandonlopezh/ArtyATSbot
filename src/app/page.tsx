@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Copy, Upload, Briefcase } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 
@@ -19,12 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
-const ACCEPTED_FILE_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/pdf'];
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Please tell Arty your name!" }),
@@ -35,7 +34,7 @@ const formSchema = z.object({
     .refine((files): files is FileList => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 4MB.`)
     .refine(
       (files): files is FileList => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
-      '.pdf, .docx, and .txt files are accepted.'
+      '.docx, and .txt files are accepted.'
     ),
   jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
   goals: z.string().optional(),
@@ -83,14 +82,17 @@ export default function AtsRealScorePage() {
                     }
                 } catch (error) {
                     console.error('Error parsing docx file:', error);
-                    reject(new Error('Failed to parse .docx file.'));
+                    reject(new Error('Failed to parse .docx file. The file might be corrupted or in an unsupported format.'));
                 }
             };
             reader.readAsArrayBuffer(file);
-        } else {
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => reject(reader.error);
-            reader.readAsText(file);
+        } else if (file.type === 'text/plain' || file.type === 'application/pdf') {
+             reader.onload = () => resolve(reader.result as string);
+             reader.onerror = () => reject(reader.error);
+             reader.readAsText(file);
+        }
+         else {
+            reject(new Error('Unsupported file type. Please use .docx or .txt'));
         }
     });
 };
@@ -138,6 +140,40 @@ export default function AtsRealScorePage() {
     form.reset();
     setStep('input');
   };
+  
+  const handleTryAgain = async (newResumeFile: File) => {
+    setStep('loading');
+    try {
+        const currentValues = form.getValues();
+        const resumeText = await readFileAsText(newResumeFile);
+        
+        const result = await getAtsAnalysis({
+            ...currentValues,
+            resumeText,
+        });
+
+        if (result.success) {
+            setAnalysisResult(result.data);
+            setStep('results');
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Analysis Failed',
+                description: result.error,
+            });
+            setStep('results'); // Go back to showing previous results
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        toast({
+            variant: 'destructive',
+            title: 'Error processing new resume',
+            description: errorMessage,
+        });
+        setStep('results'); // Go back to showing previous results
+    }
+};
+
 
   const renderContent = () => {
     switch (step) {
@@ -150,7 +186,7 @@ export default function AtsRealScorePage() {
           </div>
         );
       case 'results':
-        return analysisResult && <ResultsDisplay result={analysisResult} onBack={handleGoBack} />;
+        return analysisResult && <ResultsDisplay result={analysisResult} onBack={handleGoBack} onTryAgain={handleTryAgain} />;
       case 'input':
       default:
         return (
@@ -203,9 +239,9 @@ export default function AtsRealScorePage() {
                       <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <Input type="file" accept=".pdf,.docx,.txt" {...resumeFileRef} />
+                      <Input type="file" accept=".docx,.txt" {...resumeFileRef} />
                     </FormControl>
-                    <FormMessage />
+                     <FormMessage />
                   </FormItem>
                 )}
               />
@@ -265,7 +301,7 @@ export default function AtsRealScorePage() {
           <Bot className="w-10 h-10 text-primary" />
           <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
         </div>
-        <p className="italic text-muted-foreground">Arty will be your career search companion</p>
+        <p className="italic text-muted-foreground">w/ Arty the Career Search companion</p>
       </header>
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
@@ -287,22 +323,13 @@ export default function AtsRealScorePage() {
   );
 }
 
-function ResultsDisplay({ result, onBack }: { result: AnalysisResult; onBack: () => void }) {
+function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'bg-accent';
     if (score >= 60) return 'bg-yellow-500';
     return 'bg-destructive';
   };
   
-  const { toast } = useToast();
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: 'Copied to Clipboard!',
-      description: `${label} has been copied.`,
-    });
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
@@ -311,26 +338,30 @@ function ResultsDisplay({ result, onBack }: { result: AnalysisResult; onBack: ()
         Analyze Another
       </Button>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <ScoreCard
-          title="ATS Real Score"
-          score={result.scores.atsRealScore}
-          description="Your real chance of getting an interview."
-          isPrimary
-        />
-        <ScoreCard title="ATS Pass Score" score={result.scores.atsPassScore} description="Will you get past the bot?" />
-        <ScoreCard
-          title="Human Recruiter Score"
-          score={result.scores.humanRecruiterScore}
-          description="Will a human want to talk to you?"
-        />
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-full md:w-2/3 lg:w-1/2">
+             <ScoreCard
+                title="ATS Real Score"
+                score={result.scores.atsRealScore}
+                description="This is the score that matters. It shows your true chances of getting an interview."
+                isPrimary
+                isCenter
+            />
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 w-full">
+            <ScoreCard title="ATS Pass Score" score={result.scores.atsPassScore} description="Will you get past the bot?" />
+            <ScoreCard
+                title="Human Recruiter Score"
+                score={result.scores.humanRecruiterScore}
+                description="Will a human want to talk to you?"
+            />
+        </div>
       </div>
 
       <Tabs defaultValue="feedback" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="feedback">Arty's Feedback</TabsTrigger>
-          <TabsTrigger value="suggestions">Enhancements</TabsTrigger>
-          <TabsTrigger value="revision">Auto-Revise</TabsTrigger>
+          <TabsTrigger value="suggestions">What Could be better</TabsTrigger>
         </TabsList>
         
         <TabsContent value="feedback" className="mt-4">
@@ -362,46 +393,14 @@ function ResultsDisplay({ result, onBack }: { result: AnalysisResult; onBack: ()
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="revision" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Automated Revision Tool</CardTitle>
-              <CardDescription>Arty has rewritten your summary and found key terms to add.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="mb-2 font-semibold text-md">Revised Summary ✨</h3>
-                <div className="relative p-4 rounded-md bg-secondary">
-                  <p className="italic">{result.revision.revisedSummary}</p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(result.revision.revisedSummary, 'Revised summary')}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                 <p className="mt-2 text-sm text-muted-foreground">{result.revision.explanation}</p>
-              </div>
-              <div>
-                <h3 className="mb-2 font-semibold text-md">Enhanced Key Terms 🔑</h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.revision.enhancedKeyTerms.map((term, index) => (
-                    <Badge key={index} variant="outline" className="font-code">{term}</Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+      
+       <TryAgain onTryAgain={onTryAgain} />
     </div>
   );
 }
 
-function ScoreCard({ title, score, description, isPrimary = false }: { title: string; score: number; description: string; isPrimary?: boolean }) {
+function ScoreCard({ title, score, description, isPrimary = false, isCenter = false }: { title: string; score: number; description: string; isPrimary?: boolean, isCenter?: boolean }) {
   const [progress, setProgress] = React.useState(0);
 
   React.useEffect(() => {
@@ -414,27 +413,82 @@ function ScoreCard({ title, score, description, isPrimary = false }: { title: st
     if (value >= 60) return 'text-yellow-500';
     return 'text-destructive';
   };
+  
+    const scoreSizeClass = isCenter ? "text-7xl" : "text-5xl";
+    const titleSizeClass = isCenter ? "text-2xl" : "text-lg";
 
   return (
     <Card className={cn("flex flex-col", isPrimary && "bg-primary/10 border-primary")}>
       <CardHeader>
-        <CardTitle className={cn("text-lg", isPrimary && "text-primary")}>{title}</CardTitle>
+        <CardTitle className={cn("font-bold", titleSizeClass, isPrimary && "text-primary")}>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col justify-center flex-grow">
         <div className="flex items-center justify-center gap-4">
           <div
             className={cn(
-              "text-5xl font-bold tracking-tighter",
+              "font-bold tracking-tighter",
+              scoreSizeClass,
               isPrimary ? "text-primary" : getScoreColorClass(score)
             )}
           >
             {score}
-            <span className="text-3xl text-muted-foreground">%</span>
+            <span className={cn("text-muted-foreground", isCenter ? "text-4xl" : "text-3xl")}>%</span>
           </div>
         </div>
         <Progress value={progress} className={cn("h-2 mt-4", isPrimary && "[&>div]:bg-primary")} />
       </CardContent>
     </Card>
   );
+}
+
+function TryAgain({ onTryAgain }: { onTryAgain: (file: File) => void }) {
+    const [file, setFile] = React.useState<File | null>(null);
+    const [isUploading, setIsUploading] = React.useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+        }
+    };
+
+    const handleButtonClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleResubmit = async () => {
+        if (!file) return;
+        setIsUploading(true);
+        await onTryAgain(file);
+        setIsUploading(false);
+        setFile(null);
+        if(fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+    return (
+        <Card className="mt-8 bg-secondary/50">
+            <CardHeader>
+                <CardTitle>Made changes to your resume?</CardTitle>
+                <CardDescription>Upload your new version to see how your score has improved.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center gap-4">
+                 <Button onClick={handleButtonClick} variant="outline">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {file ? 'Change File' : 'Upload New Resume'}
+                </Button>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".docx,.txt" />
+                {file && <span className="text-sm text-muted-foreground">{file.name}</span>}
+                 {file && (
+                    <Button onClick={handleResubmit} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Re-Analyze
+                    </Button>
+                )}
+            </CardContent>
+        </Card>
+    );
 }
