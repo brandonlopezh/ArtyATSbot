@@ -29,7 +29,7 @@ const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Please tell Arty your name!" }),
+  name: z.string().min(1, { message: "Please tell us your name!" }),
   resumeFile: z
     .any()
     .refine((files): files is FileList => files instanceof FileList && files.length > 0, 'Please upload your resume.')
@@ -279,11 +279,11 @@ export default function AtsRealScorePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-background text-foreground sm:p-6 md:p-10">
-       <header className="relative flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
+      <header className="relative flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
         <div className="absolute top-0 right-0">
           <ThemeToggle />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
         <p className="text-lg text-muted-foreground">Beat the bots and impress recruiters</p>
       </header>
       <main className="w-full max-w-4xl">
@@ -363,8 +363,14 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
 
       <Tabs defaultValue="suggestions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="suggestions">Enhancements Needed</TabsTrigger>
-          <TabsTrigger value="why-rating">Arty, would you give me an interview?</TabsTrigger>
+          <TabsTrigger value="suggestions">
+            <span className="hidden sm:inline">Enhancements Needed</span>
+            <span className="sm:hidden">Enhancements</span>
+          </TabsTrigger>
+          <TabsTrigger value="why-rating">
+             <span className="hidden sm:inline">Arty, would you give me an interview?</span>
+            <span className="sm:hidden">Interview?</span>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="suggestions" className="mt-4">
