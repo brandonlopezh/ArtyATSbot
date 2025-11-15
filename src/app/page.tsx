@@ -314,10 +314,16 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
-      <Button variant="outline" onClick={onBack}>
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Analyze Another
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Analyze Another
+        </Button>
+        <Button onClick={() => setIsChatOpen(true)} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <Sparkles className="w-5 h-5 mr-2" />
+            Ask Gemini
+        </Button>
+      </div>
 
       <div className="flex flex-col items-center gap-6">
         <div className="w-full">
@@ -339,19 +345,12 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
         </div>
       </div>
       
-      <div className="text-center">
-         <Button onClick={() => setIsChatOpen(true)} size="lg" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-            <Sparkles className="w-5 h-5 mr-2" />
-            Ask Arty
-        </Button>
-      </div>
-
        <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
         <DialogContent className="sm:max-w-[625px] h-[70vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Bot /> Ask Arty</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Bot /> Ask Gemini</DialogTitle>
             <DialogDescription>
-              Have questions about your resume, the job description, or your analysis? Arty is here to help.
+              Have questions about your resume, the job description, or your analysis? Gemini is here to help.
             </DialogDescription>
           </DialogHeader>
           <AskArtyChat
