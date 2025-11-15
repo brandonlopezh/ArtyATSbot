@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
@@ -323,12 +324,15 @@ export default function AtsRealScorePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-background text-foreground sm:p-6 md:p-10">
-      <header className="flex flex-col items-center gap-2 mb-8 text-center">
+      <header className="relative flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
         <div className="flex items-center gap-3">
           <Bot className="w-10 h-10 text-primary" />
           <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
         </div>
         <p className="italic text-muted-foreground">w/ Arty the Career Search companion</p>
+        <div className="absolute top-0 right-0">
+          <ThemeToggle />
+        </div>
       </header>
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
@@ -448,7 +452,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
   }, [score]);
 
   const getScoreColorClass = (value: number) => {
-    if (value >= 70) return 'text-green-400';
+    if (value >= 70) return 'text-green-500';
     if (value >= 60) return 'text-yellow-500';
     return 'text-destructive';
   };
@@ -457,7 +461,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
     const titleSizeClass = isCenter ? "text-2xl" : "text-lg";
 
   return (
-    <Card className={cn("flex flex-col", isPrimary && "bg-primary/10 border-primary")}>
+    <Card className={cn("flex flex-col", isPrimary && "bg-secondary")}>
       <CardHeader>
         <CardTitle className={cn("font-bold", titleSizeClass, isPrimary && "text-primary")}>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "NODE_ENV=production next build",
@@ -47,6 +47,7 @@
     "lucide-react": "^0.475.0",
     "marked": "^13.0.1",
     "next": "15.3.3",
+    "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
     "pizzip": "^3.1.7",
     "react": "^18.3.1",
