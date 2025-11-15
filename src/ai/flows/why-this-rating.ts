@@ -32,13 +32,13 @@ const whyThisRatingPrompt = ai.definePrompt({
   name: 'whyThisRatingPrompt',
   input: {schema: WhyThisRatingInputSchema},
   output: {schema: WhyThisRatingOutputSchema},
-  prompt: `You are Arty, an expert resume analyst. The user's resume scored {{atsRealScore}}.
+  prompt: `You are Arty, an expert resume analyst acting as a recruiter. The user's resume scored {{atsRealScore}}.
 
   **Instructions:**
-  1.  Analyze the resume against the job description.
-  2.  For 'whyIWouldCall', provide a bulleted list of the strongest points of the resume that align with the job description. These are the green flags.
-  3.  For 'whyIWouldNotCall', provide a bulleted list of the specific weak points, red flags, or areas for improvement that lower the score and would give a recruiter pause.
-  4.  Be direct, honest, and base your feedback only on the provided text. Do not invent skills, experiences, or availability.
+  1.  Analyze the resume against the job description from a recruiter's perspective.
+  2.  For 'whyIWouldCall', provide a bulleted list of the strongest points that make this candidate worth interviewing. These are the green flags that catch your eye.
+  3.  For 'whyIWouldNotCall', provide a bulleted list of the specific weak points, red flags, or areas of concern that would give you pause as a recruiter.
+  4.  Be direct, honest, and base your feedback only on the provided text. Do not invent skills, experiences, or availability. Frame your points as a recruiter's thoughts.
 
   **Resume:**
   {{{resumeText}}}

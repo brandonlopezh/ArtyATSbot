@@ -184,7 +184,7 @@ export default function AtsRealScorePage() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center h-96">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">Arty is meticulously analyzing your resume (may take up to a minute to achieve greatness)</p>
+            <p className="text-muted-foreground">Arty is on the case...</p>
           </div>
         );
       case 'results':
@@ -366,7 +366,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       <div className="flex flex-col items-center gap-6">
         <div className="w-full">
              <ScoreCard
-                title="ATS Real Score"
+                title="ATS Real Score ✨"
                 score={result.scores.atsRealScore}
                 description="This is the score that matters. It shows your true chances of getting an interview."
                 isPrimary
@@ -408,19 +408,19 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
                     <CardDescription>Arty's breakdown of what's affecting your score.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2">
+                    <div className="p-4 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2 font-semibold text-green-600">
                             <Plus className="h-5 w-5"/>
                             <span>Why I would call this applicant</span>
                         </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert border-l-2 pl-4 ml-2 border-green-600/30" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
+                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-green-600/30" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
                     </div>
-                     <div className="space-y-2">
+                     <div className="p-4 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2 font-semibold text-red-600">
                              <Minus className="h-5 w-5" />
                              <span>Why I wouldn't call this applicant</span>
                         </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert border-l-2 pl-4 ml-2 border-red-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
+                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-red-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
                     </div>
                 </CardContent>
             </Card>
@@ -450,8 +450,8 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
     const titleSizeClass = isCenter ? "text-2xl" : "text-lg";
 
   return (
-    <Card className={cn("flex flex-col")}>
-      <CardHeader>
+    <Card className={cn("flex flex-col", isCenter && "bg-secondary/30")}>
+      <CardHeader className={cn(isCenter && "items-center")}>
         <CardTitle className={cn("font-bold", titleSizeClass, isPrimary && "text-primary")}>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -461,7 +461,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
             className={cn(
               "font-bold tracking-tighter",
               scoreSizeClass,
-              isPrimary ? "text-primary" : getScoreColorClass(score)
+              isPrimary ? getScoreColorClass(score) : getScoreColorClass(score)
             )}
           >
             {score}
