@@ -184,7 +184,6 @@ export default function AtsRealScorePage() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center h-96">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <h2 className="text-2xl font-semibold">Arty is on the case...</h2>
             <p className="text-muted-foreground">Arty is meticulously analyzing your resume (may take up to a minute to achieve greatness)</p>
           </div>
         );
@@ -309,7 +308,7 @@ export default function AtsRealScorePage() {
       case 'loading':
         return {
           title: "Analyzing...",
-          description: "Arty is on the case, please wait a moment."
+          description: ""
         }
       case 'input':
       default:
@@ -408,31 +407,21 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
                     <CardTitle>Why This Rating?</CardTitle>
                     <CardDescription>Arty's breakdown of what's affecting your score.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                     <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-                        <AccordionItem value="item-1">
-                            <AccordionTrigger className='text-green-500'>
-                                <div className="flex items-center gap-2">
-                                    <Plus className="h-5 w-5"/>
-                                    <span className="font-semibold">Why I would call this applicant</span>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                               <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
-                            </AccordionContent>
-                        </AccordionItem>
-                        <AccordionItem value="item-2">
-                             <AccordionTrigger className='text-red-500'>
-                                <div className="flex items-center gap-2">
-                                     <Minus className="h-5 w-5" />
-                                     <span className="font-semibold">Why I wouldn't call this applicant</span>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-semibold text-green-600">
+                            <Plus className="h-5 w-5"/>
+                            <span>Why I would call this applicant</span>
+                        </div>
+                        <div className="prose prose-sm max-w-none dark:prose-invert border-l-2 pl-4 ml-2 border-green-600/30" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
+                    </div>
+                     <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-semibold text-red-600">
+                             <Minus className="h-5 w-5" />
+                             <span>Why I wouldn't call this applicant</span>
+                        </div>
+                        <div className="prose prose-sm max-w-none dark:prose-invert border-l-2 pl-4 ml-2 border-red-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
+                    </div>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -461,7 +450,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
     const titleSizeClass = isCenter ? "text-2xl" : "text-lg";
 
   return (
-    <Card className={cn("flex flex-col", isPrimary && "bg-secondary")}>
+    <Card className={cn("flex flex-col")}>
       <CardHeader>
         <CardTitle className={cn("font-bold", titleSizeClass, isPrimary && "text-primary")}>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
