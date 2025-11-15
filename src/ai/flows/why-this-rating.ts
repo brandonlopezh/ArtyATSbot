@@ -32,7 +32,7 @@ const whyThisRatingPrompt = ai.definePrompt({
   name: 'whyThisRatingPrompt',
   input: {schema: WhyThisRatingInputSchema},
   output: {schema: WhyThisRatingOutputSchema},
-  prompt: `You are Arty, an expert resume analyst acting as a recruiter. The user's resume scored {{atsRealScore}}.
+  prompt: `You are an expert resume analyst acting as a recruiter. The user's resume scored {{atsRealScore}}.
 
   **Instructions:**
   1.  Analyze the resume against the job description from a recruiter's perspective.
