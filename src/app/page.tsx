@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send, X } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -551,11 +551,12 @@ function AskArtyFloater({ result }: { result: AnalysisResult }) {
 
         const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: question }];
         setChatHistory(newHistory);
+        const currentQuestion = question;
         setQuestion('');
         setIsThinking(true);
 
         const response = await askArtyAction({
-            question,
+            question: currentQuestion,
             resumeText: result.resumeText,
             jobDescriptionText: result.jobDescriptionText,
         }, chatHistory);
@@ -576,54 +577,85 @@ function AskArtyFloater({ result }: { result: AnalysisResult }) {
 
 
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-                <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 animate-in fade-in-0 zoom-in-50 duration-500">
-                    <div className="flex flex-col items-center">
-                        <Bot className="h-8 w-8" />
-                        <span className="text-xs">Ask Arty</span>
-                    </div>
-                </Button>
-            </SheetTrigger>
-            <SheetContent className="flex flex-col">
-                <SheetHeader>
-                    <SheetTitle>Ask Arty</SheetTitle>
-                    <SheetDescription>
-                        Have questions about your resume or the job? Arty is here to help!
-                    </SheetDescription>
-                </SheetHeader>
-                <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
-                    <div className="space-y-4">
-                        {chatHistory.map((chat, index) => (
-                            <div key={index} className={cn("flex items-start gap-3", chat.role === 'user' ? 'justify-end' : '')}>
-                                {chat.role === 'model' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
-                                <div className={cn("p-3 rounded-lg max-w-sm", chat.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: marked(chat.content) }} />
-                                </div>
+        <>
+            <Button
+                onClick={() => setOpen(true)}
+                className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40 animate-in fade-in-0 zoom-in-50 duration-500"
+            >
+                <div className="flex flex-col items-center">
+                    <Bot className="h-8 w-8" />
+                    <span className="text-xs">Ask Arty</span>
+                </div>
+            </Button>
+
+            {open && (
+                <div className="fixed bottom-24 right-6 w-full max-w-sm z-50 animate-in fade-in-0 slide-in-from-bottom-5 duration-300">
+                    <Card className="flex flex-col h-[60vh] shadow-2xl">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Ask Arty</CardTitle>
+                                <CardDescription>Arty is here to help!</CardDescription>
                             </div>
-                        ))}
-                         {isThinking && (
-                            <div className="flex items-start gap-3">
-                                <Bot className="h-6 w-6 text-primary flex-shrink-0" />
-                                <div className="p-3 rounded-lg bg-muted">
-                                    <Loader2 className="h-5 w-5 animate-spin" />
+                            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="flex-1 overflow-hidden p-0">
+                            <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
+                                <div className="space-y-4">
+                                     {chatHistory.length === 0 && (
+                                        <div className="text-center text-sm text-muted-foreground py-8">
+                                            Have questions about your resume or the job description? Ask away!
+                                        </div>
+                                    )}
+                                    {chatHistory.map((chat, index) => (
+                                        <div key={index} className={cn("flex items-start gap-3", chat.role === 'user' ? 'justify-end' : '')}>
+                                            {chat.role === 'model' && <Avatar className="h-8 w-8"><AvatarFallback><Bot className="h-5 w-5 text-primary" /></AvatarFallback></Avatar>}
+                                            <div className={cn("p-3 rounded-lg max-w-xs", chat.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                                                <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: marked(chat.content) }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {isThinking && (
+                                        <div className="flex items-start gap-3">
+                                            <Avatar className="h-8 w-8"><AvatarFallback><Bot className="h-5 w-5 text-primary" /></AvatarFallback></Avatar>
+                                            <div className="p-3 rounded-lg bg-muted">
+                                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </ScrollArea>
-                <form onSubmit={handleAskArty} className="flex items-center gap-2 pt-4">
-                    <Input
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="e.g., How can I improve my skills section?"
-                        disabled={isThinking}
-                    />
-                    <Button type="submit" size="icon" disabled={isThinking || !question.trim()}>
-                        {isThinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </Button>
-                </form>
-            </SheetContent>
-        </Sheet>
+                            </ScrollArea>
+                        </CardContent>
+                        <div className="p-4 border-t">
+                            <form onSubmit={handleAskArty} className="flex items-center gap-2">
+                                <Input
+                                    value={question}
+                                    onChange={(e) => setQuestion(e.target.value)}
+                                    placeholder="Ask about your resume..."
+                                    disabled={isThinking}
+                                    autoComplete="off"
+                                />
+                                <Button type="submit" size="icon" disabled={isThinking || !question.trim()}>
+                                    {isThinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                </Button>
+                            </form>
+                        </div>
+                    </Card>
+                </div>
+            )}
+        </>
     );
+}
+
+function Avatar({ className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) {
+  return (
+    <div className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)} {...props} />
+  );
+}
+
+function AvatarFallback({ className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) {
+  return (
+    <span className={cn("flex h-full w-full items-center justify-center rounded-full bg-muted", className)} {...props} />
+  );
 }

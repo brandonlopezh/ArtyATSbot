@@ -72,7 +72,10 @@ Job Description:
 {{{jobDescriptionText}}}
 
 Output the scores in JSON format.
-`, 
+`,
+  config: {
+    temperature: 0,
+  },
 });
 
 const atsScoreCalculationFlow = ai.defineFlow(

@@ -80,6 +80,9 @@ const prompt = ai.definePrompt({
 
   Now, generate the suggestions for the provided resume and job description.
   `,
+  config: {
+    temperature: 0.1,
+  },
 });
 
 const resumeEnhancementSuggestionsFlow = ai.defineFlow(

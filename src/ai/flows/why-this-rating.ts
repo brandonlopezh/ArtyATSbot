@@ -48,6 +48,9 @@ const whyThisRatingPrompt = ai.definePrompt({
 
   Output the reasons in JSON format.
   `,
+  config: {
+    temperature: 0,
+  },
 });
 
 const whyThisRatingFlow = ai.defineFlow(
