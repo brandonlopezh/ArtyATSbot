@@ -599,4 +599,3 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
     </div>
   );
 }
-
