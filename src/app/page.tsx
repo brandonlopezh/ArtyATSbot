@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import { marked } from 'marked';
 
 
 import { Button } from '@/components/ui/button';
@@ -330,6 +331,9 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
     return 'bg-destructive';
   };
   
+  const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
+  const feedbackHtml = React.useMemo(() => marked(result.feedback.feedback), [result.feedback.feedback]);
+
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
@@ -339,7 +343,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       </Button>
 
       <div className="flex flex-col items-center gap-6">
-        <div className="w-full md:w-2/3 lg:w-1/2">
+        <div className="w-full">
              <ScoreCard
                 title="ATS Real Score"
                 score={result.scores.atsRealScore}
@@ -361,19 +365,19 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       <Tabs defaultValue="feedback" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="feedback">Arty's Feedback</TabsTrigger>
-          <TabsTrigger value="suggestions">What Could be better</TabsTrigger>
+          <TabsTrigger value="suggestions">Enhancements Needed</TabsTrigger>
         </TabsList>
         
         <TabsContent value="feedback" className="mt-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <Avatar>
-                  <AvatarImage src="https://picsum.photos/seed/arty/40/40" alt="Arty" />
+                <Avatar className="w-16 h-16 border-2 border-primary">
+                  <AvatarImage src="https://picsum.photos/seed/arty-robot/100/100" data-ai-hint="robot illustration" alt="Arty the Robot" />
                   <AvatarFallback>🤖</AvatarFallback>
                 </Avatar>
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="whitespace-pre-wrap">{result.feedback.feedback}</p>
+                <div className="p-4 rounded-lg bg-secondary flex-1">
+                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: feedbackHtml }} />
                 </div>
               </div>
             </CardContent>
@@ -387,9 +391,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
               <CardDescription>Here are specific, actionable edits to improve your scores.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="p-4 space-y-4 prose prose-sm text-foreground max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2">
-                 <p className="whitespace-pre-wrap">{result.suggestions.suggestedEdits}</p>
-              </div>
+               <div className="p-4 space-y-4 prose max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-foreground" dangerouslySetInnerHTML={{ __html: suggestionsHtml }} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -436,7 +438,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
             <span className={cn("text-muted-foreground", isCenter ? "text-4xl" : "text-3xl")}>%</span>
           </div>
         </div>
-        <Progress value={progress} className={cn("h-2 mt-4", isPrimary && "[&>div]:bg-primary")} />
+        <Progress value={progress} className={cn("h-3 mt-4", isPrimary && "[&>div]:bg-primary")} />
       </CardContent>
     </Card>
   );

@@ -22,7 +22,7 @@ const PersonalizedFeedbackInputSchema = z.object({
 export type PersonalizedFeedbackInput = z.infer<typeof PersonalizedFeedbackInputSchema>;
 
 const PersonalizedFeedbackOutputSchema = z.object({
-  feedback: z.string().describe('The personalized feedback for the user.'),
+  feedback: z.string().describe('The personalized feedback for the user in markdown bullet points.'),
 });
 export type PersonalizedFeedbackOutput = z.infer<typeof PersonalizedFeedbackOutputSchema>;
 
@@ -34,18 +34,13 @@ const prompt = ai.definePrompt({
   name: 'personalizedFeedbackPrompt',
   input: {schema: PersonalizedFeedbackInputSchema},
   output: {schema: PersonalizedFeedbackOutputSchema},
-  prompt: `You are Arty, a direct and honest career advisor. Your goal is to give {{userName}} clear, actionable feedback to improve their resume. Be concise and straightforward. No fluff.
+  prompt: `You are Arty, a direct and honest career advisor robot. Your goal is to give {{userName}} clear, actionable feedback to improve their resume.
 
 Your analysis is based on these scores:
 - ATS Pass Score: {{atsPassScore}}
 - Human Recruiter Score: {{humanRecruiterScore}}
 
-Based on the resume and job description, here is the key feedback for {{userName}}. Get straight to the point. Identify the single biggest strength and the single biggest weakness.
-
-Resume Strengths: {{strengths}}
-Resume Weaknesses: {{weaknesses}}
-
-Provide direct feedback under 75 words. Start with the most critical point.
+Based on the resume weaknesses ({{weaknesses}}), provide 2-3 direct, scannable bullet points for {{userName}}. Each bullet point should be a single, short sentence. No fluff. Get straight to the point.
 `,config: {
     safetySettings: [
       {
