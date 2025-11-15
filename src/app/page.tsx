@@ -240,8 +240,8 @@ export default function AtsRealScorePage() {
                       <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="border p-2 rounded-md w-full" />
+                      <div className="relative border border-input rounded-md">
+                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="p-2 w-full" />
                       </div>
                     </FormControl>
                      <FormMessage />
@@ -297,8 +297,31 @@ export default function AtsRealScorePage() {
     }
   };
 
+  const getCardTexts = () => {
+    switch(step) {
+      case 'results':
+        return {
+          title: "Analysis Report",
+          description: "Arty has meticulously analyzed your resume. Let's dive into the results."
+        }
+      case 'loading':
+        return {
+          title: "Analyzing...",
+          description: "Arty is on the case, please wait a moment."
+        }
+      case 'input':
+      default:
+        return {
+          title: "Let's Get Started!",
+          description: ""
+        }
+    }
+  }
+
+  const { title, description } = getCardTexts();
+
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 bg-background sm:p-6 md:p-10">
+    <div className="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-10">
       <header className="flex flex-col items-center gap-2 mb-8 text-center">
         <div className="flex items-center gap-3">
           <Bot className="w-10 h-10 text-primary" />
@@ -309,12 +332,10 @@ export default function AtsRealScorePage() {
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {step === 'results' ? 'Analysis Report' : "Let's Get Started!"}
+            {title}
           </CardTitle>
           <CardDescription>
-            {step === 'results'
-              ? "Arty has meticulously analyzed your resume. Let's dive into the results."
-              : "Let's beat the bots and impress recruiters. 🚀"}
+            {description}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
