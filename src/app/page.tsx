@@ -283,8 +283,7 @@ export default function AtsRealScorePage() {
         <div className="absolute top-0 right-0">
           <ThemeToggle />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
-        <p className="text-lg text-muted-foreground">Beat the bots and impress recruiters</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
       </header>
       <main className="w-full max-w-4xl">
         <Card className="w-full shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
