@@ -147,7 +147,7 @@ export default function AtsRealScorePage() {
         const result = await getAtsAnalysis({
             name: form.getValues('name'),
             jobDescriptionText: analysisResult.jobDescriptionText,
-            resumeText,
+            resumeText: resumeText,
         });
 
         if (result.success) {
@@ -241,7 +241,7 @@ export default function AtsRealScorePage() {
                 )}
               />
               
-              <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+              <Button type="submit" size="lg" className="w-full focus-visible:ring-primary" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 ) : (
@@ -260,7 +260,6 @@ export default function AtsRealScorePage() {
       case 'results':
         return {
           title: "Analysis Report",
-          description: "Arty has meticulously analyzed your resume. Let's dive into the results."
         }
       case 'loading':
         return {
@@ -271,7 +270,6 @@ export default function AtsRealScorePage() {
       default:
         return {
           title: "Let's Get Started!",
-          description: "Beat the bots and impress recruiters with an AI-powered analysis."
         }
     }
   }
@@ -299,6 +297,9 @@ export default function AtsRealScorePage() {
       </main>
       <footer className="flex items-center justify-center w-full gap-4 mt-8 text-sm text-muted-foreground">
         <p>Powered by AI. Designed with ❤️.</p>
+        <div className="md:hidden">
+            <ThemeToggle />
+        </div>
       </footer>
     </div>
   );
@@ -318,7 +319,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
           <ArrowLeft className="w-4 h-4 mr-2" />
           Analyze Another
         </Button>
-        <Button onClick={() => setIsChatOpen(true)} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+        <Button onClick={() => setIsChatOpen(true)} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus-visible:ring-primary">
             <Bot className="w-5 h-5 mr-2" />
             Ask Gemini
         </Button>
@@ -327,7 +328,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       <div className="flex flex-col items-center gap-6">
         <div className="w-full">
              <ScoreCard
-                title="ATS Real Score ✨"
+                title="ATS Real Score"
                 score={result.scores.atsRealScore}
                 description="This is the score that matters. It shows your true chances of getting an interview."
                 isPrimary
@@ -356,6 +357,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
             resumeText={result.resumeText}
             jobDescriptionText={result.jobDescriptionText}
             initialQuestion={`Gemini, why is my resume rating ${result.scores.atsRealScore}%?`}
+            chatHistory={[]}
           />
         </DialogContent>
       </Dialog>
@@ -513,8 +515,8 @@ type ChatMessage = {
   content: string;
 };
 
-function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resumeText: string; jobDescriptionText: string; initialQuestion: string }) {
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion, chatHistory }: { resumeText: string; jobDescriptionText: string; initialQuestion: string, chatHistory: ChatMessage[] }) {
+  const [messages, setMessages] = React.useState<ChatMessage[]>(chatHistory);
   const [input, setInput] = React.useState(initialQuestion);
   const [isLoading, setIsLoading] = React.useState(false);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
