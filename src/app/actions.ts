@@ -6,11 +6,11 @@ import { generatePersonalizedFeedback, type PersonalizedFeedbackOutput } from '@
 import { resumeEnhancementSuggestions, type ResumeEnhancementSuggestionsOutput } from '@/ai/flows/resume-enhancement-suggestions';
 import { automatedResumeRevisionTool, type AutomatedResumeRevisionToolOutput } from '@/ai/flows/automated-resume-revision-tool';
 
-const formSchema = z.object({
-  name: z.string().min(1, { message: "Please tell Arty your name!" }),
-  employmentStatus: z.string().min(1, { message: "Please select your employment status." }),
-  resumeText: z.string().min(100, { message: "Your resume seems a bit short. Please paste the full text." }),
-  jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
+const analysisSchema = z.object({
+  name: z.string(),
+  employmentStatus: z.string(),
+  resumeText: z.string(),
+  jobDescriptionText: z.string(),
   goals: z.string().optional(),
 });
 
@@ -23,7 +23,7 @@ export type AnalysisResult = {
 };
 
 export async function getAtsAnalysis(
-  values: z.infer<typeof formSchema>
+  values: z.infer<typeof analysisSchema>
 ): Promise<{ success: true; data: AnalysisResult } | { success: false; error: string }> {
     try {
         const { name, employmentStatus, resumeText, jobDescriptionText, goals } = values;

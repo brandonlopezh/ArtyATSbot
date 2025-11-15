@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, FileText, Briefcase, ArrowLeft, Copy } from 'lucide-react';
+import { Loader2, Sparkles, Bot, FileText, Briefcase, ArrowLeft, Copy, Upload } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,13 +20,24 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const ACCEPTED_FILE_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+
 const formSchema = z.object({
   name: z.string().min(1, { message: "Please tell Arty your name!" }),
   employmentStatus: z.string().min(1, { message: "Please select your employment status." }),
-  resumeText: z.string().min(100, { message: "Your resume seems a bit short. Please paste the full text." }),
+  resumeFile: z
+    .any()
+    .refine((files): files is FileList => files instanceof FileList && files.length > 0, 'Please upload your resume.')
+    .refine((files): files is FileList => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 4MB.`)
+    .refine(
+      (files): files is FileList => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
+      '.pdf, .docx, and .txt files are accepted.'
+    ),
   jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
   goals: z.string().optional(),
 });
+
 
 type Step = 'input' | 'loading' | 'results';
 
@@ -40,25 +51,54 @@ export default function AtsRealScorePage() {
     defaultValues: {
       name: '',
       employmentStatus: '',
-      resumeText: '',
       jobDescriptionText: '',
       goals: '',
     },
   });
 
   const isLoading = step === 'loading';
+  const resumeFileRef = form.register("resumeFile");
+
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setStep('loading');
-    const result = await getAtsAnalysis(values);
-    if (result.success) {
-      setAnalysisResult(result.data);
-      setStep('results');
-    } else {
-      toast({
+
+    try {
+      const resumeFile = values.resumeFile[0];
+      const resumeText = await readFileAsText(resumeFile);
+
+      const result = await getAtsAnalysis({
+        name: values.name,
+        employmentStatus: values.employmentStatus,
+        resumeText: resumeText,
+        jobDescriptionText: values.jobDescriptionText,
+        goals: values.goals,
+      });
+
+      if (result.success) {
+        setAnalysisResult(result.data);
+        setStep('results');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: result.error,
+        });
+        setStep('input');
+      }
+    } catch (error) {
+       toast({
         variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: result.error,
+        title: 'Error reading file.',
+        description: 'There was a problem reading your resume file. Please try again.',
       });
       setStep('input');
     }
@@ -66,6 +106,7 @@ export default function AtsRealScorePage() {
 
   const handleGoBack = () => {
     setAnalysisResult(null);
+    form.reset();
     setStep('input');
   };
 
@@ -124,20 +165,16 @@ export default function AtsRealScorePage() {
                 />
               </div>
 
-              <FormField
+               <FormField
                 control={form.control}
-                name="resumeText"
+                name="resumeFile"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" /> Your Resume
+                      <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Paste your full resume text here..."
-                        className="h-48 font-code"
-                        {...field}
-                      />
+                      <Input type="file" accept=".pdf,.doc,.docx,.txt" {...resumeFileRef} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
