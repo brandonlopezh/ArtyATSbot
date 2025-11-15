@@ -283,7 +283,7 @@ export default function AtsRealScorePage() {
         <div className="absolute top-0 right-0">
           <ThemeToggle />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
         <p className="text-lg text-muted-foreground">Beat the bots and impress recruiters</p>
       </header>
       <main className="w-full max-w-4xl">
@@ -319,7 +319,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
           Analyze Another
         </Button>
         <Button onClick={() => setIsChatOpen(true)} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-            <Sparkles className="w-5 h-5 mr-2" />
+            <Bot className="w-5 h-5 mr-2" />
             Ask Gemini
         </Button>
       </div>
@@ -589,14 +589,14 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Gemini anything..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 focus-visible:ring-primary"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 handleSend(e);
               }
             }}
           />
-          <Button type="submit" size="icon" disabled={isLoading}>
+          <Button type="submit" size="icon" disabled={isLoading} className="focus-visible:ring-primary">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send message</span>
           </Button>
