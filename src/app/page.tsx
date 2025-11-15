@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send, CornerDownLeft } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -210,8 +210,8 @@ export default function AtsRealScorePage() {
                         <Upload className="w-4 h-4" /> Upload Your Resume
                       </FormLabel>
                       <FormControl>
-                        <div className="relative p-2 border border-input rounded-md">
-                          <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="w-full" />
+                        <div className="relative">
+                           <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="w-full" />
                         </div>
                       </FormControl>
                        <FormMessage />
@@ -270,7 +270,7 @@ export default function AtsRealScorePage() {
       default:
         return {
           title: "Let's Get Started!",
-          description: ""
+          description: "Beat the bots and impress recruiters with an AI-powered analysis."
         }
     }
   }
@@ -279,27 +279,27 @@ export default function AtsRealScorePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-background text-foreground sm:p-6 md:p-10">
-      <header className="relative flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
+      <header className="flex flex-col items-center w-full max-w-4xl gap-2 mb-8 text-center">
         <div className="flex items-center gap-3">
           <Bot className="w-10 h-10 text-primary" />
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score ✨</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">ATS Real Score</h1>
         </div>
-        <p className="italic text-muted-foreground">w/ Arty the Career Search companion</p>
-        <div className="absolute top-0 right-0">
-          <ThemeToggle />
-        </div>
+        <p className="text-lg text-muted-foreground">w/ Arty the Career Search companion</p>
       </header>
-      <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            {title}
-          </CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-        <CardContent>{renderContent()}</CardContent>
-      </Card>
-      <footer className="mt-8 text-sm text-center text-muted-foreground">
+      <main className="w-full max-w-4xl">
+        <Card className="w-full shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
+          <CardHeader>
+            <CardTitle className="text-2xl">
+              {title}
+            </CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
+          </CardHeader>
+          <CardContent>{renderContent()}</CardContent>
+        </Card>
+      </main>
+      <footer className="flex items-center justify-center w-full gap-4 mt-8 text-sm text-muted-foreground">
         <p>Powered by AI. Designed with ❤️.</p>
+        <ThemeToggle />
       </footer>
     </div>
   );
@@ -564,7 +564,7 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
                   message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}
               >
-                <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: marked(message.content) as string}} />
+                <div className="prose prose-sm dark:prose-invert max-w-full" dangerouslySetInnerHTML={{ __html: marked(message.content) as string}} />
               </div>
             </div>
           ))}
@@ -577,12 +577,12 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
           )}
         </div>
       </ScrollArea>
-      <DialogFooter className="pt-4">
+      <DialogFooter className="pt-4 border-t">
         <form onSubmit={handleSend} className="flex items-center w-full space-x-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Arty anything..."
+            placeholder="Ask Gemini anything..."
             disabled={isLoading}
             className="flex-1"
             onKeyDown={(e) => {
@@ -593,6 +593,7 @@ function AskArtyChat({ resumeText, jobDescriptionText, initialQuestion }: { resu
           />
           <Button type="submit" size="icon" disabled={isLoading}>
             <Send className="h-4 w-4" />
+            <span className="sr-only">Send message</span>
           </Button>
         </form>
       </DialogFooter>
