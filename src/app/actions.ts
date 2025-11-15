@@ -7,10 +7,8 @@ import { askArty, type AskArtyOutput, type AskArtyInput } from '@/ai/flows/ask-a
 
 export type AnalysisInput = {
   name: string;
-  employmentStatus: string;
   resumeText: string;
   jobDescriptionText: string;
-  goals?: string;
 };
 
 
@@ -26,7 +24,7 @@ export async function getAtsAnalysis(
   values: AnalysisInput
 ): Promise<{ success: true; data: AnalysisResult } | { success: false; error: string }> {
     try {
-        const { name, employmentStatus, resumeText, jobDescriptionText, goals } = values;
+        const { name, resumeText, jobDescriptionText } = values;
 
         const scores = await atsScoreCalculation({ resumeText, jobDescriptionText });
 
@@ -36,8 +34,6 @@ export async function getAtsAnalysis(
                 jobDescriptionText,
                 atsPassScore: scores.atsPassScore,
                 humanRecruiterScore: scores.humanRecruiterScore,
-                userInfo: goals || 'Looking for a new role.',
-                employmentStatus,
             }),
             whyThisRating({
                 resumeText,

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Send, X } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus, Link } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -14,24 +14,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAtsAnalysis, type AnalysisResult, askArtyAction } from '@/app/actions';
+import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Please tell Arty your name!" }),
-  employmentStatus: z.string().min(1, { message: "Please select your employment status." }),
   resumeFile: z
     .any()
     .refine((files): files is FileList => files instanceof FileList && files.length > 0, 'Please upload your resume.')
@@ -41,7 +36,6 @@ const formSchema = z.object({
       '.docx, and .txt files are accepted.'
     ),
   jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
-  goals: z.string().optional(),
 });
 
 
@@ -56,9 +50,7 @@ export default function AtsRealScorePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      employmentStatus: '',
       jobDescriptionText: '',
-      goals: '',
     },
   });
 
@@ -111,10 +103,8 @@ export default function AtsRealScorePage() {
 
       const result = await getAtsAnalysis({
         name: values.name,
-        employmentStatus: values.employmentStatus,
         resumeText: resumeText,
         jobDescriptionText: values.jobDescriptionText,
-        goals: values.goals,
       });
 
       if (result.success) {
@@ -208,48 +198,25 @@ export default function AtsRealScorePage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="employmentStatus"
+                  name="resumeFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Are you currently employed? 🤔</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="employed">Yes, I'm currently employed</SelectItem>
-                          <SelectItem value="unemployed">No, I'm looking for a new role</SelectItem>
-                          <SelectItem value="student">I'm a student</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
+                      <FormLabel className="flex items-center gap-2">
+                        <Upload className="w-4 h-4" /> Upload Your Resume
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative p-2 border border-input rounded-md">
+                          <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="w-full" />
+                        </div>
+                      </FormControl>
+                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-               <FormField
-                control={form.control}
-                name="resumeFile"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Upload className="w-4 h-4" /> Upload Your Resume
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative p-2 border border-input rounded-md">
-                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="w-full" />
-                      </div>
-                    </FormControl>
-                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              
               <FormField
                 control={form.control}
                 name="jobDescriptionText"
@@ -270,20 +237,6 @@ export default function AtsRealScorePage() {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="goals"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Any specific goals? (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 'pivot into product management', 'get a senior role'" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -382,6 +335,15 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
             />
         </div>
       </div>
+      
+      <div className="text-center">
+         <Button asChild size="lg" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <a href="https://gemini.google.com/gem/10bd2dSACyUNxaOd-vkCWNrktLpQl-8TR?usp=sharing" target="_blank" rel="noopener noreferrer">
+            <Sparkles className="w-5 h-5 mr-2" />
+            Ask Arty
+          </a>
+        </Button>
+      </div>
 
       <Tabs defaultValue="suggestions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -428,8 +390,6 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       </Tabs>
       
        <TryAgain onTryAgain={onTryAgain} />
-       <AskArtyFloater result={result} />
-
     </div>
   );
 }
@@ -524,138 +484,4 @@ function TryAgain({ onTryAgain }: { onTryAgain: (file: File) => void }) {
             </CardContent>
         </Card>
     );
-}
-
-type ChatMessage = {
-    role: 'user' | 'model';
-    content: string;
-};
-
-function AskArtyFloater({ result }: { result: AnalysisResult }) {
-    const [open, setOpen] = React.useState(false);
-    const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
-    const [question, setQuestion] = React.useState('');
-    const [isThinking, setIsThinking] = React.useState(false);
-    const { toast } = useToast();
-    const scrollAreaRef = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-      if(scrollAreaRef.current) {
-        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
-      }
-    }, [chatHistory])
-
-    const handleAskArty = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!question.trim() || isThinking) return;
-
-        const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: question }];
-        setChatHistory(newHistory);
-        const currentQuestion = question;
-        setQuestion('');
-        setIsThinking(true);
-
-        const response = await askArtyAction({
-            question: currentQuestion,
-            resumeText: result.resumeText,
-            jobDescriptionText: result.jobDescriptionText,
-        }, chatHistory);
-
-        setIsThinking(false);
-
-        if (response.success) {
-            setChatHistory([...newHistory, { role: 'model', content: response.data.answer }]);
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Arty is having trouble thinking.',
-                description: response.error,
-            });
-             setChatHistory(chatHistory); // revert history
-        }
-    };
-
-
-    return (
-        <>
-            <Button
-                onClick={() => setOpen(true)}
-                className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40 animate-in fade-in-0 zoom-in-50 duration-500"
-            >
-                <div className="flex flex-col items-center">
-                    <Bot className="h-8 w-8" />
-                    <span className="text-xs">Ask Arty</span>
-                </div>
-            </Button>
-
-            {open && (
-                <div className="fixed bottom-24 right-6 w-full max-w-sm z-50 animate-in fade-in-0 slide-in-from-bottom-5 duration-300">
-                    <Card className="flex flex-col h-[60vh] shadow-2xl">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Ask Arty</CardTitle>
-                                <CardDescription>Arty is here to help!</CardDescription>
-                            </div>
-                            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="flex-1 overflow-hidden p-0">
-                            <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
-                                <div className="space-y-4">
-                                     {chatHistory.length === 0 && (
-                                        <div className="text-center text-sm text-muted-foreground py-8">
-                                            Have questions about your resume or the job description? Ask away!
-                                        </div>
-                                    )}
-                                    {chatHistory.map((chat, index) => (
-                                        <div key={index} className={cn("flex items-start gap-3", chat.role === 'user' ? 'justify-end' : '')}>
-                                            {chat.role === 'model' && <Avatar className="h-8 w-8"><AvatarFallback><Bot className="h-5 w-5 text-primary" /></AvatarFallback></Avatar>}
-                                            <div className={cn("p-3 rounded-lg max-w-xs", chat.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                                                <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: marked(chat.content) }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {isThinking && (
-                                        <div className="flex items-start gap-3">
-                                            <Avatar className="h-8 w-8"><AvatarFallback><Bot className="h-5 w-5 text-primary" /></AvatarFallback></Avatar>
-                                            <div className="p-3 rounded-lg bg-muted">
-                                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </ScrollArea>
-                        </CardContent>
-                        <div className="p-4 border-t">
-                            <form onSubmit={handleAskArty} className="flex items-center gap-2">
-                                <Input
-                                    value={question}
-                                    onChange={(e) => setQuestion(e.target.value)}
-                                    placeholder="Ask about your resume..."
-                                    disabled={isThinking}
-                                    autoComplete="off"
-                                />
-                                <Button type="submit" size="icon" disabled={isThinking || !question.trim()}>
-                                    {isThinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                </Button>
-                            </form>
-                        </div>
-                    </Card>
-                </div>
-            )}
-        </>
-    );
-}
-
-function Avatar({ className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) {
-  return (
-    <div className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)} {...props} />
-  );
-}
-
-function AvatarFallback({ className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) {
-  return (
-    <span className={cn("flex h-full w-full items-center justify-center rounded-full bg-muted", className)} {...props} />
-  );
 }

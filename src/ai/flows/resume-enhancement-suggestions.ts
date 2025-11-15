@@ -16,8 +16,6 @@ const ResumeEnhancementSuggestionsInputSchema = z.object({
   jobDescriptionText: z.string().describe('The text content of the job description.'),
   atsPassScore: z.number().describe('The ATS pass score of the resume.'),
   humanRecruiterScore: z.number().describe('The human recruiter score of the resume.'),
-  userInfo: z.string().describe('Brief description of the user and their goals.'),
-  employmentStatus: z.string().describe('The current employment status of the user'),
 });
 export type ResumeEnhancementSuggestionsInput = z.infer<
   typeof ResumeEnhancementSuggestionsInputSchema
@@ -42,10 +40,6 @@ const prompt = ai.definePrompt({
   output: {schema: ResumeEnhancementSuggestionsOutputSchema},
   prompt: `You are Arty, a helpful and direct career advisor. Your task is to provide specific, actionable resume edits to a user.
 
-  **User Information:**
-  - **User Context:** {{userInfo}}
-  - **Employment Status:** {{employmentStatus}}
-
   **Analysis Data:**
   - **ATS Pass Score:** {{atsPassScore}}
   - **Human Recruiter Score:** {{humanRecruiterScore}}
@@ -64,7 +58,6 @@ const prompt = ai.definePrompt({
   3.  Format the output using Markdown bullet points for clarity.
   4.  Adhere strictly to the Honesty Filter:
       - **DO NOT** invent skills or experiences.
-      - **DO NOT** suggest title changes if the user is employed.
       - Reframe existing experience, but do not fabricate it.
   5.  Keep the tone direct, professional, and helpful. No fluff.
 
@@ -82,6 +75,7 @@ const prompt = ai.definePrompt({
   `,
   config: {
     temperature: 0.1,
+    model: 'googleai/gemini-2.5-flash',
   },
 });
 
