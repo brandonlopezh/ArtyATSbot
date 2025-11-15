@@ -352,8 +352,8 @@ export default function AtsRealScorePage() {
 function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
   
   const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
-  const whyWouldCallHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldCall), [result.ratingExplanation.whyIWouldCall]);
-  const whyIWouldNotCallHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldNotCall), [result.ratingExplanation.whyIWouldNotCall]);
+  const whyIWouldMoveForwardHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldMoveForward), [result.ratingExplanation.whyIWouldMoveForward]);
+  const whyIWouldNotMoveForwardHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldNotMoveForward), [result.ratingExplanation.whyIWouldNotMoveForward]);
 
 
   return (
@@ -386,7 +386,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
       <Tabs defaultValue="suggestions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="suggestions">Enhancements Needed</TabsTrigger>
-          <TabsTrigger value="why-rating">Arty, why this rating?</TabsTrigger>
+          <TabsTrigger value="why-rating">Arty, would you give me an interview?</TabsTrigger>
         </TabsList>
         
         <TabsContent value="suggestions" className="mt-4">
@@ -404,23 +404,23 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
         <TabsContent value="why-rating" className="mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Why This Rating?</CardTitle>
+                    <CardTitle>Arty, would you give me an interview?</CardTitle>
                     <CardDescription>Arty's breakdown of what's affecting your score.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="p-4 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2 font-semibold text-green-600">
                             <Plus className="h-5 w-5"/>
-                            <span>Why I would call this applicant</span>
+                            <span>Why I would move forward with your application</span>
                         </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-green-600/30" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
+                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-green-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldMoveForwardHtml }} />
                     </div>
                      <div className="p-4 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2 font-semibold text-red-600">
                              <Minus className="h-5 w-5" />
-                             <span>Why I wouldn't call this applicant</span>
+                             <span>Why I wouldn't move forward with your application</span>
                         </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-red-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
+                        <div className="prose prose-sm max-w-none dark:prose-invert mt-2 border-l-2 pl-4 ml-2 border-red-600/30" dangerouslySetInnerHTML={{ __html: whyIWouldNotMoveForwardHtml }} />
                     </div>
                 </CardContent>
             </Card>
@@ -441,8 +441,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
   }, [score]);
 
   const getScoreColorClass = (value: number) => {
-    if (value >= 70) return 'text-green-500';
-    if (value >= 60) return 'text-yellow-500';
+    if (value >= 70) return 'text-primary';
     return 'text-destructive';
   };
   
@@ -461,7 +460,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
             className={cn(
               "font-bold tracking-tighter",
               scoreSizeClass,
-              isPrimary ? getScoreColorClass(score) : getScoreColorClass(score)
+              getScoreColorClass(score)
             )}
           >
             {score}

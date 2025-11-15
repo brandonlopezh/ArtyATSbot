@@ -19,8 +19,8 @@ const WhyThisRatingInputSchema = z.object({
 export type WhyThisRatingInput = z.infer<typeof WhyThisRatingInputSchema>;
 
 const WhyThisRatingOutputSchema = z.object({
-  whyIWouldCall: z.string().describe('A bulleted list of reasons why a recruiter WOULD call this applicant based on their resume.'),
-  whyIWouldNotCall: z.string().describe("A bulleted list of reasons why a recruiter WOULD NOT call this applicant based on their resume."),
+  whyIWouldMoveForward: z.string().describe('A bulleted list of reasons why a recruiter WOULD move forward with this application.'),
+  whyIWouldNotMoveForward: z.string().describe("A bulleted list of reasons why a recruiter WOULD NOT move forward with this application."),
 });
 export type WhyThisRatingOutput = z.infer<typeof WhyThisRatingOutputSchema>;
 
@@ -36,8 +36,8 @@ const whyThisRatingPrompt = ai.definePrompt({
 
   **Instructions:**
   1.  Analyze the resume against the job description from a recruiter's perspective.
-  2.  For 'whyIWouldCall', provide a bulleted list of the strongest points that make this candidate worth interviewing. These are the green flags that catch your eye.
-  3.  For 'whyIWouldNotCall', provide a bulleted list of the specific weak points, red flags, or areas of concern that would give you pause as a recruiter.
+  2.  For 'whyIWouldMoveForward', provide a bulleted list of the strongest points that make this candidate worth interviewing. These are the green flags that catch your eye.
+  3.  For 'whyIWouldNotMoveForward', provide a bulleted list of the specific weak points, red flags, or areas of concern that would give you pause as a recruiter.
   4.  Be direct, honest, and base your feedback only on the provided text. Do not invent skills, experiences, or availability. Frame your points as a recruiter's thoughts.
 
   **Resume:**
