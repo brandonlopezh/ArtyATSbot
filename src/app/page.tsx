@@ -20,7 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -241,7 +240,9 @@ export default function AtsRealScorePage() {
                       <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <Input type="file" accept=".docx,.txt" {...resumeFileRef} />
+                      <div className="relative">
+                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="border p-2 rounded-md w-full" />
+                      </div>
                     </FormControl>
                      <FormMessage />
                   </FormItem>
@@ -308,12 +309,12 @@ export default function AtsRealScorePage() {
       <Card className="w-full max-w-4xl shadow-2xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {step === 'input' ? "Let's Get Started!" : "Analysis Report"}
+            {step === 'results' ? 'Analysis Report' : "Let's Get Started!"}
           </CardTitle>
           <CardDescription>
-            {step === 'input'
-              ? "What's up! I'm Arty, your ATS Job Helper. Let's beat the bots and impress recruiters. 🚀"
-              : "Arty has meticulously analyzed your resume. Let's dive into the results."}
+            {step === 'results'
+              ? "Arty has meticulously analyzed your resume. Let's dive into the results."
+              : "Let's beat the bots and impress recruiters. 🚀"}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
@@ -328,7 +329,6 @@ export default function AtsRealScorePage() {
 function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
   
   const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
-  const feedbackHtml = React.useMemo(() => marked(result.feedback.feedback), [result.feedback.feedback]);
   const whyRatingExplanationHtml = React.useMemo(() => marked(result.ratingExplanation.explanation), [result.ratingExplanation.explanation]);
   const whyRatingRecruiterHtml = React.useMemo(() => marked(result.ratingExplanation.recruiterPerspective), [result.ratingExplanation.recruiterPerspective]);
 
@@ -360,21 +360,12 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
         </div>
       </div>
 
-      <Tabs defaultValue="feedback" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="feedback">Arty's Feedback</TabsTrigger>
+      <Tabs defaultValue="suggestions" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="suggestions">Enhancements Needed</TabsTrigger>
           <TabsTrigger value="why-rating">Arty, why this rating?</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="feedback" className="mt-4">
-          <Card>
-            <CardContent className="p-6">
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2" dangerouslySetInnerHTML={{ __html: feedbackHtml }} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="suggestions" className="mt-4">
           <Card>
             <CardHeader>
@@ -395,7 +386,7 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyRatingExplanationHtml }} />
-                    <Alert>
+                    <Alert className="bg-secondary">
                         <Bot className="h-4 w-4" />
                         <AlertTitle>Recruiter's Perspective</AlertTitle>
                         <AlertDescription>
@@ -421,7 +412,7 @@ function ScoreCard({ title, score, description, isPrimary = false, isCenter = fa
   }, [score]);
 
   const getScoreColorClass = (value: number) => {
-    if (value >= 70) return 'text-accent';
+    if (value >= 70) return 'text-green-400';
     if (value >= 60) return 'text-yellow-500';
     return 'text-destructive';
   };

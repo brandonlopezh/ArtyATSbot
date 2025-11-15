@@ -2,7 +2,6 @@
 
 import { z } from 'zod';
 import { atsScoreCalculation, type AtsScoreCalculationOutput } from '@/ai/flows/ats-score-calculation';
-import { generatePersonalizedFeedback, type PersonalizedFeedbackOutput } from '@/ai/flows/personalized-feedback';
 import { resumeEnhancementSuggestions, type ResumeEnhancementSuggestionsOutput } from '@/ai/flows/resume-enhancement-suggestions';
 import { whyThisRating, type WhyThisRatingOutput } from '@/ai/flows/why-this-rating';
 
@@ -18,7 +17,6 @@ const analysisSchema = z.object({
 
 export type AnalysisResult = {
   scores: AtsScoreCalculationOutput;
-  feedback: PersonalizedFeedbackOutput;
   suggestions: ResumeEnhancementSuggestionsOutput;
   ratingExplanation: WhyThisRatingOutput;
 };
@@ -31,8 +29,7 @@ export async function getAtsAnalysis(
 
         const scores = await atsScoreCalculation({ resumeText, jobDescriptionText });
 
-        // 1. Calculate Scores & Get Suggestions in parallel
-        const [suggestions, feedback, ratingExplanation] = await Promise.all([
+        const [suggestions, ratingExplanation] = await Promise.all([
             resumeEnhancementSuggestions({
                 resumeText,
                 jobDescriptionText,
@@ -40,15 +37,6 @@ export async function getAtsAnalysis(
                 humanRecruiterScore: scores.humanRecruiterScore,
                 userInfo: goals || 'Looking for a new role.',
                 employmentStatus,
-            }),
-            generatePersonalizedFeedback({
-                resumeText,
-                jobDescriptionText,
-                userName: name,
-                atsPassScore: scores.atsPassScore,
-                humanRecruiterScore: scores.humanRecruiterScore,
-                strengths: "Your resume shows a strong foundation. Let's sharpen it.", // Generic strength
-                weaknesses: "Based on the analysis, here are areas to focus on.", // Generic weakness, real suggestions are in the other flow
             }),
             whyThisRating({
                 resumeText,
@@ -62,7 +50,6 @@ export async function getAtsAnalysis(
             success: true,
             data: {
                 scores,
-                feedback,
                 suggestions,
                 ratingExplanation,
             },
