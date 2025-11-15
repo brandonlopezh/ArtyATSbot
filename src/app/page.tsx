@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase } from 'lucide-react';
+import { Loader2, Sparkles, Bot, ArrowLeft, Upload, Briefcase, Minus, Plus } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { marked } from 'marked';
@@ -22,6 +22,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
@@ -240,8 +241,8 @@ export default function AtsRealScorePage() {
                       <Upload className="w-4 h-4" /> Upload Your Resume
                     </FormLabel>
                     <FormControl>
-                      <div className="relative border border-input rounded-md">
-                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="p-2 w-full" />
+                      <div className="relative p-2 border border-input rounded-md">
+                        <Input type="file" accept=".docx,.txt" {...resumeFileRef} className="w-full" />
                       </div>
                     </FormControl>
                      <FormMessage />
@@ -321,7 +322,7 @@ export default function AtsRealScorePage() {
   const { title, description } = getCardTexts();
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-10">
+    <div className="flex flex-col items-center min-h-screen p-4 bg-background text-foreground sm:p-6 md:p-10">
       <header className="flex flex-col items-center gap-2 mb-8 text-center">
         <div className="flex items-center gap-3">
           <Bot className="w-10 h-10 text-primary" />
@@ -334,9 +335,7 @@ export default function AtsRealScorePage() {
           <CardTitle className="text-2xl">
             {title}
           </CardTitle>
-          <CardDescription>
-            {description}
-          </CardDescription>
+          {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
       </Card>
@@ -350,8 +349,8 @@ export default function AtsRealScorePage() {
 function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult; onBack: () => void; onTryAgain: (file: File) => void; }) {
   
   const suggestionsHtml = React.useMemo(() => marked(result.suggestions.suggestedEdits), [result.suggestions.suggestedEdits]);
-  const whyRatingExplanationHtml = React.useMemo(() => marked(result.ratingExplanation.explanation), [result.ratingExplanation.explanation]);
-  const whyRatingRecruiterHtml = React.useMemo(() => marked(result.ratingExplanation.recruiterPerspective), [result.ratingExplanation.recruiterPerspective]);
+  const whyWouldCallHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldCall), [result.ratingExplanation.whyIWouldCall]);
+  const whyIWouldNotCallHtml = React.useMemo(() => marked(result.ratingExplanation.whyIWouldNotCall), [result.ratingExplanation.whyIWouldNotCall]);
 
 
   return (
@@ -406,14 +405,30 @@ function ResultsDisplay({ result, onBack, onTryAgain }: { result: AnalysisResult
                     <CardDescription>Arty's breakdown of what's affecting your score.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyRatingExplanationHtml }} />
-                    <Alert className="bg-secondary">
-                        <Bot className="h-4 w-4" />
-                        <AlertTitle>Recruiter's Perspective</AlertTitle>
-                        <AlertDescription>
-                            <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyRatingRecruiterHtml }} />
-                        </AlertDescription>
-                    </Alert>
+                     <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                        <AccordionItem value="item-1">
+                            <AccordionTrigger className='text-green-500'>
+                                <div className="flex items-center gap-2">
+                                    <Plus className="h-5 w-5"/>
+                                    <span className="font-semibold">Why I would call this applicant</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                               <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyWouldCallHtml }} />
+                            </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-2">
+                             <AccordionTrigger className='text-red-500'>
+                                <div className="flex items-center gap-2">
+                                     <Minus className="h-5 w-5" />
+                                     <span className="font-semibold">Why I wouldn't call this applicant</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: whyIWouldNotCallHtml }} />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </CardContent>
             </Card>
         </TabsContent>

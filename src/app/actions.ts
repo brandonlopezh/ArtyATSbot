@@ -1,18 +1,16 @@
 'use server';
 
-import { z } from 'zod';
 import { atsScoreCalculation, type AtsScoreCalculationOutput } from '@/ai/flows/ats-score-calculation';
 import { resumeEnhancementSuggestions, type ResumeEnhancementSuggestionsOutput } from '@/ai/flows/resume-enhancement-suggestions';
 import { whyThisRating, type WhyThisRatingOutput } from '@/ai/flows/why-this-rating';
 
-
-const analysisSchema = z.object({
-  name: z.string(),
-  employmentStatus: z.string(),
-  resumeText: z.string(),
-  jobDescriptionText: z.string(),
-  goals: z.string().optional(),
-});
+export type AnalysisInput = {
+  name: string;
+  employmentStatus: string;
+  resumeText: string;
+  jobDescriptionText: string;
+  goals?: string;
+};
 
 
 export type AnalysisResult = {
@@ -22,7 +20,7 @@ export type AnalysisResult = {
 };
 
 export async function getAtsAnalysis(
-  values: z.infer<typeof analysisSchema>
+  values: AnalysisInput
 ): Promise<{ success: true; data: AnalysisResult } | { success: false; error: string }> {
     try {
         const { name, employmentStatus, resumeText, jobDescriptionText, goals } = values;

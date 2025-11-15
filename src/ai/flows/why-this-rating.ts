@@ -19,8 +19,8 @@ const WhyThisRatingInputSchema = z.object({
 export type WhyThisRatingInput = z.infer<typeof WhyThisRatingInputSchema>;
 
 const WhyThisRatingOutputSchema = z.object({
-  explanation: z.string().describe('A detailed explanation for the score in markdown format.'),
-  recruiterPerspective: z.string().describe("What a recruiter would think about the resume's weak points."),
+  whyIWouldCall: z.string().describe('A bulleted list of reasons why a recruiter WOULD call this applicant based on their resume.'),
+  whyIWouldNotCall: z.string().describe("A bulleted list of reasons why a recruiter WOULD NOT call this applicant based on their resume."),
 });
 export type WhyThisRatingOutput = z.infer<typeof WhyThisRatingOutputSchema>;
 
@@ -32,13 +32,13 @@ const whyThisRatingPrompt = ai.definePrompt({
   name: 'whyThisRatingPrompt',
   input: {schema: WhyThisRatingInputSchema},
   output: {schema: WhyThisRatingOutputSchema},
-  prompt: `You are Arty, an expert resume analyst. The user has a resume that scored {{atsRealScore}} and they want to know why.
+  prompt: `You are Arty, an expert resume analyst. The user's resume scored {{atsRealScore}}.
 
   **Instructions:**
   1.  Analyze the resume against the job description.
-  2.  Identify the top 2-3 specific areas in the resume that are most likely responsible for lowering the score. These could be missing keywords, unclear impact, poor formatting, etc.
-  3.  For your 'explanation' output, provide a clear, bulleted list of these weak points. Be direct.
-  4.  For the 'recruiterPerspective' output, write a short paragraph explaining what a human recruiter might think when seeing these issues. Frame it as "A recruiter might think...".
+  2.  For 'whyIWouldCall', provide a bulleted list of the strongest points of the resume that align with the job description. These are the green flags.
+  3.  For 'whyIWouldNotCall', provide a bulleted list of the specific weak points, red flags, or areas for improvement that lower the score and would give a recruiter pause.
+  4.  Be direct, honest, and base your feedback only on the provided text. Do not invent skills, experiences, or availability.
 
   **Resume:**
   {{{resumeText}}}
@@ -46,7 +46,7 @@ const whyThisRatingPrompt = ai.definePrompt({
   **Job Description:**
   {{{jobDescriptionText}}}
 
-  Output the explanation and recruiter perspective in JSON format.
+  Output the reasons in JSON format.
   `,
 });
 
