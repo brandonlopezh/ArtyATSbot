@@ -690,6 +690,8 @@ Robot bullets that list tasks → CONVERT TO CAR stories with metrics-
 Vague claims without proof → ADD SPECIFICS or DELETE-
 
 Corporate buzzword soup → SIMPLIFY to direct language
+`,
+});
 
 const resumeEnhancementSuggestionsFlow = ai.defineFlow(
   {

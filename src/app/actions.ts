@@ -6,13 +6,14 @@ import { generatePersonalizedFeedback, type PersonalizedFeedbackOutput } from '@
 import { resumeEnhancementSuggestions, type ResumeEnhancementSuggestionsOutput } from '@/ai/flows/resume-enhancement-suggestions';
 import { automatedResumeRevisionTool, type AutomatedResumeRevisionToolOutput } from '@/ai/flows/automated-resume-revision-tool';
 
-export const formSchema = z.object({
+const formSchema = z.object({
   name: z.string().min(1, { message: "Please tell Arty your name!" }),
   employmentStatus: z.string().min(1, { message: "Please select your employment status." }),
   resumeText: z.string().min(100, { message: "Your resume seems a bit short. Please paste the full text." }),
   jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
   goals: z.string().optional(),
 });
+
 
 export type AnalysisResult = {
   scores: AtsScoreCalculationOutput;

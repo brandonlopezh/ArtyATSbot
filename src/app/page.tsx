@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { Loader2, Sparkles, Bot, FileText, Briefcase, ArrowLeft, Copy } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,20 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAtsAnalysis, type AnalysisResult, formSchema } from '@/app/actions';
+import { getAtsAnalysis, type AnalysisResult } from '@/app/actions';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+
+const formSchema = z.object({
+  name: z.string().min(1, { message: "Please tell Arty your name!" }),
+  employmentStatus: z.string().min(1, { message: "Please select your employment status." }),
+  resumeText: z.string().min(100, { message: "Your resume seems a bit short. Please paste the full text." }),
+  jobDescriptionText: z.string().min(100, { message: "Please paste the full job description." }),
+  goals: z.string().optional(),
+});
 
 type Step = 'input' | 'loading' | 'results';
 
