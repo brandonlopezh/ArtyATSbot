@@ -105,12 +105,14 @@ export default function AtsRealScorePage() {
       const resumeFile = values.resumeFile[0];
       const resumeText = await readFileAsText(resumeFile);
 
+      console.log('Calling getAtsAnalysis...');
       const result = await getAtsAnalysis({
         name: values.name,
         resumeText: resumeText,
         jobDescriptionText: values.jobDescriptionText,
       });
 
+      console.log('Analysis result:', result);
       if (result.success) {
         setAnalysisResult(result.data);
         setAnalysisId(id => id + 1);
